@@ -3,82 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>재미있는 짝맞추기</title>
+    <title>메모리게임</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="app">
-        <!-- 오디오 설정 버튼 -->
-        <button id="btn-audio-toggle" class="btn-icon audio-btn">🔊</button>
+        <button id="btn-lang-toggle" class="btn-icon lang-btn" aria-label="Switch language">🌐 EN</button>
+        <button id="btn-audio-toggle" class="btn-icon audio-btn" hidden aria-hidden="true">🔊</button>
 
-        <!-- 메인 화면 (테마 선택) -->
         <div id="screen-home" class="screen active">
             <header>
-                <h1>재미있는 짝맞추기 🧩</h1>
-                <p>어떤 그림으로 놀아볼까요?</p>
+                <h1 id="home-title">메모리게임</h1>
+                <span id="home-credit" class="home-credit">by.지범아빠</span>
+                <p id="home-subtitle">어떤 그림으로 놀아볼까요?</p>
             </header>
-            
+
             <main>
-                <div id="theme-grid" class="theme-grid">
-                    <!-- Javascript에서 테마 버튼 렌더링 됨 -->
-                </div>
-                <!-- 파일 업로드 인풋 (화면엔 보이지 않음) -->
+                <div id="theme-grid" class="theme-grid"></div>
                 <input type="file" id="custom-image-upload" multiple accept="image/*" style="display:none;">
-                
-                <div class="difficulty-section">
-                    <h3>카드 개수 선택</h3>
-                    <div class="difficulty-buttons">
-                        <button class="btn-diff active" data-pairs="6">12장<br><small>(초급)</small></button>
-                        <button class="btn-diff" data-pairs="8">16장<br><small>(중급)</small></button>
-                        <button class="btn-diff" data-pairs="10">20장<br><small>(고급)</small></button>
-                        <button class="btn-diff" data-pairs="12">24장<br><small>(최고급)</small></button>
-                    </div>
-                </div>
             </main>
         </div>
 
-        <!-- 게임 화면 -->
         <div id="screen-game" class="screen">
             <header class="game-header">
-                <button id="btn-back" class="btn-icon">🏠 처음으로</button>
-                <div class="player-stats">
-                    <div id="player1-stat" class="player-stat active">
-                        <span class="player-name">Player 1 <br><small>(빨강)</small></span>
-                        <div class="score-badge"><span id="score-p1" class="player-score">0</span>점</div>
-                    </div>
-                    <div id="player2-stat" class="player-stat">
-                        <span class="player-name">Player 2 <br><small>(파랑)</small></span>
-                        <div class="score-badge"><span id="score-p2" class="player-score">0</span>점</div>
-                    </div>
-                </div>
-                <button id="btn-restart" class="btn-icon">🔄 다시하기</button>
+                <button id="btn-back" class="btn-icon game-nav-btn" aria-label="Home" title="Home">🏠</button>
+                <div id="player-stats" class="player-stats"></div>
+                <button id="btn-restart" class="btn-icon game-nav-btn" aria-label="Restart" title="Restart">🔄</button>
             </header>
-            
+
             <main class="game-main">
-                <div id="game-board" class="game-board">
-                    <!-- Javascript에서 카드 렌더링 됨 -->
-                </div>
+                <div id="game-board" class="game-board"></div>
             </main>
-            
-            <!-- 카운트다운 오버레이 -->
+
             <div id="countdown-overlay" class="countdown-overlay hidden">
                 <span id="countdown-text">3</span>
             </div>
         </div>
 
-        <!-- 클리어 모달 -->
         <div id="modal-clear" class="modal hidden">
             <div class="modal-content">
                 <div class="confetti-container"></div>
-                <h2>🎉 참 잘했어요! 🎉</h2>
-                <div class="mascot">⭐️</div>
-                <p>모든 카드의 짝을 다 찾았어요!</p>
+                <h2 id="clear-title">다 찾았어요!</h2>
+                <div class="mascot">🎉</div>
+                <p id="clear-message">모든 카드의 짝을 다 찾았어요!</p>
                 <p class="final-score" id="final-result-text">결과를 계산 중...</p>
                 <div class="modal-buttons">
-                    <button id="btn-modal-restart" class="btn-primary">한 번 더 하기</button>
+                    <button id="btn-modal-restart" class="btn-primary">다시하기</button>
                     <button id="btn-modal-home" class="btn-secondary">다른 게임 하기</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="modal-difficulty" class="modal hidden">
+            <div class="modal-content difficulty-modal-content">
+                <h2 id="setup-title">게임 설정</h2>
+                <p id="setup-subtitle" class="difficulty-modal-text">카드 개수와 플레이어 수를 골라요</p>
+
+                <div class="setup-group">
+                    <h3 id="setup-cards-label">카드 개수</h3>
+                    <div id="difficulty-buttons-modal" class="difficulty-buttons difficulty-buttons-modal">
+                        <button class="btn-diff" data-pairs="6">12장</button>
+                        <button class="btn-diff active" data-pairs="8">16장</button>
+                        <button class="btn-diff" data-pairs="10">20장</button>
+                        <button class="btn-diff" data-pairs="12">24장</button>
+                    </div>
+                </div>
+
+                <div class="setup-group">
+                    <h3 id="setup-players-label">플레이어 수</h3>
+                    <div id="player-count-buttons" class="difficulty-buttons player-count-buttons">
+                        <button class="btn-player-count" data-players="1">1명</button>
+                        <button class="btn-player-count active" data-players="2">2명</button>
+                        <button class="btn-player-count" data-players="3">3명</button>
+                        <button class="btn-player-count" data-players="4">4명</button>
+                    </div>
+                </div>
+
+                <button id="btn-setup-start" class="btn-primary setup-start-btn">시작하기</button>
             </div>
         </div>
     </div>

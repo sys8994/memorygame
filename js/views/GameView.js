@@ -1,119 +1,296 @@
 import { audioManager } from '../utils/AudioManager.js';
+import { t } from '../data/i18n.js';
 
 export class GameView {
     constructor() {
-        // Screens
         this.screenHome = document.getElementById('screen-home');
         this.screenGame = document.getElementById('screen-game');
 
-        // Home Elements
         this.themeGrid = document.getElementById('theme-grid');
-        this.difficultyBtns = document.querySelectorAll('.btn-diff');
+        this.modalDifficulty = document.getElementById('modal-difficulty');
+        this.difficultyBtns = document.querySelectorAll('#difficulty-buttons-modal .btn-diff');
+        this.playerCountBtns = document.querySelectorAll('#player-count-buttons .btn-player-count');
+        this.btnSetupStart = document.getElementById('btn-setup-start');
 
-        // Game Elements
+        this.homeTitle = document.getElementById('home-title');
+        this.homeCredit = document.getElementById('home-credit');
+        this.homeSubtitle = document.getElementById('home-subtitle');
+        this.btnLangToggle = document.getElementById('btn-lang-toggle');
+
         this.gameBoard = document.getElementById('game-board');
-        this.statP1Score = document.getElementById('score-p1');
-        this.statP2Score = document.getElementById('score-p2');
-        this.statP1 = document.getElementById('player1-stat');
-        this.statP2 = document.getElementById('player2-stat');
+        this.playerStats = document.getElementById('player-stats');
         this.btnBack = document.getElementById('btn-back');
         this.btnRestart = document.getElementById('btn-restart');
 
-        // Modal Elements
         this.modalClear = document.getElementById('modal-clear');
+        this.clearTitle = document.getElementById('clear-title');
+        this.clearMessage = document.getElementById('clear-message');
         this.finalResultText = document.getElementById('final-result-text');
         this.btnModalRestart = document.getElementById('btn-modal-restart');
         this.btnModalHome = document.getElementById('btn-modal-home');
 
-        // Countdown
+        this.setupTitle = document.getElementById('setup-title');
+        this.setupSubtitle = document.getElementById('setup-subtitle');
+        this.setupCardsLabel = document.getElementById('setup-cards-label');
+        this.setupPlayersLabel = document.getElementById('setup-players-label');
+
         this.countdownOverlay = document.getElementById('countdown-overlay');
         this.countdownText = document.getElementById('countdown-text');
 
-        // Global UI Audio Click logic
-        document.body.addEventListener('click', (e) => {
-            if (e.target.closest('button') || e.target.closest('.theme-card') || e.target.closest('.card')) {
+        this.textThemePalettes = {
+            'theme-abc': ['#5d4f86', '#5468a4', '#4b8a6d', '#a05a7f', '#4f7ca0', '#9a6f47', '#6860a7', '#8a5ea2', '#458884', '#a06a55', '#57639a', '#5f8b5e'],
+            'theme-kr': ['#3f8579', '#6a57a0', '#93814c', '#3f7faa', '#9a5870', '#548c62', '#6f63aa', '#a06b47', '#3f8f8a', '#8b5d90', '#4e72a2', '#788a45'],
+            'theme-numbers': ['#4d6fa4', '#8a5d96', '#5d8d4a', '#a86f42', '#4684a0', '#9a5d76', '#4d8b8f', '#96664f', '#5c61a2', '#6f8d46', '#7b62aa', '#5c778d']
+        };
+        this.currentLanguage = 'ko';
+
+        document.body.addEventListener('click', (event) => {
+            if (event.target.closest('button') || event.target.closest('.theme-card') || event.target.closest('.card')) {
                 audioManager.init();
             }
-            if (e.target.closest('button') || e.target.closest('.theme-card')) {
+            if (event.target.closest('button') || event.target.closest('.theme-card')) {
                 audioManager.playClick();
             }
         });
+    }
 
-        this.btnAudioToggle = document.getElementById('btn-audio-toggle');
-        if (this.btnAudioToggle) {
-            this.btnAudioToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                audioManager.init();
-                const isMuted = audioManager.toggleMute();
-                this.btnAudioToggle.textContent = isMuted ? '🔇' : '🔊';
-            });
+    applyTranslations(language, context = {}) {
+        this.currentLanguage = language;
+        document.documentElement.lang = language;
+        document.title = t(language, 'appTitle');
+
+        this.homeTitle.textContent = t(language, 'homeTitle');
+        this.homeCredit.textContent = t(language, 'homeCredit');
+        this.homeSubtitle.textContent = t(language, 'homeSubtitle');
+        this.btnBack.innerHTML = '🏠';
+        this.btnBack.setAttribute('aria-label', t(language, 'home'));
+        this.btnBack.setAttribute('title', t(language, 'home'));
+        this.btnRestart.innerHTML = '🔄';
+        this.btnRestart.setAttribute('aria-label', t(language, 'restart'));
+        this.btnRestart.setAttribute('title', t(language, 'restart'));
+        this.clearTitle.textContent = t(language, 'clearTitle');
+        this.clearMessage.textContent = t(language, 'clearMessage');
+        this.finalResultText.textContent = t(language, 'clearPending');
+        this.btnModalRestart.textContent = t(language, 'restart');
+        this.btnModalHome.textContent = t(language, 'playAnother');
+        this.setupTitle.textContent = t(language, 'setupTitle');
+        this.setupSubtitle.textContent = t(language, 'setupSubtitle');
+        this.setupCardsLabel.textContent = t(language, 'setupCardsLabel');
+        this.setupPlayersLabel.textContent = t(language, 'setupPlayersLabel');
+        this.btnSetupStart.textContent = t(language, 'start');
+        this.btnLangToggle.textContent = `🌐 ${t(language, 'langButton')}`;
+        this.btnLangToggle.setAttribute('aria-label', t(language, 'langAria'));
+        this.btnLangToggle.setAttribute('title', t(language, 'langAria'));
+
+        const cardLabels = {
+            6: t(language, 'cards12'),
+            8: t(language, 'cards16'),
+            10: t(language, 'cards20'),
+            12: t(language, 'cards24')
+        };
+        this.difficultyBtns.forEach((button) => {
+            button.textContent = cardLabels[parseInt(button.dataset.pairs, 10)] ?? button.textContent;
+        });
+
+        const playerLabels = {
+            1: t(language, 'playerCount1'),
+            2: t(language, 'playerCount2'),
+            3: t(language, 'playerCount3'),
+            4: t(language, 'playerCount4')
+        };
+        this.playerCountBtns.forEach((button) => {
+            button.textContent = playerLabels[parseInt(button.dataset.players, 10)] ?? button.textContent;
+        });
+
+        if (context.playerCount && context.scores && context.currentPlayer) {
+            this.renderPlayerStats(context.playerCount, language, context.scores, context.currentPlayer);
         }
     }
 
-    // --- Home Screen ---
-    renderThemes(themes, selectedThemeId, onSelectTheme) {
+    renderThemes(themes, selectedThemeId, language, onSelectTheme) {
         this.themeGrid.innerHTML = '';
-        themes.forEach(theme => {
+
+        const fixedThemeIds = ['random', 'custom'];
+        const fixedThemes = [];
+        const shuffledThemes = [];
+
+        themes.forEach((theme) => {
+            if (fixedThemeIds.includes(theme.id)) {
+                fixedThemes.push(theme);
+            } else {
+                shuffledThemes.push(theme);
+            }
+        });
+
+        const orderedFixedThemes = fixedThemeIds
+            .map((themeId) => fixedThemes.find((theme) => theme.id === themeId))
+            .filter(Boolean);
+
+        for (let index = shuffledThemes.length - 1; index > 0; index--) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            [shuffledThemes[index], shuffledThemes[swapIndex]] = [shuffledThemes[swapIndex], shuffledThemes[index]];
+        }
+
+        const priorityRow = document.createElement('div');
+        priorityRow.className = 'theme-priority-row';
+
+        const themeListGrid = document.createElement('div');
+        themeListGrid.className = 'theme-list-grid';
+
+        [...orderedFixedThemes, ...shuffledThemes].forEach((theme, index) => {
             const card = document.createElement('div');
             card.className = `theme-card ${theme.id === selectedThemeId ? 'selected' : ''}`;
             card.innerHTML = `
                 <div class="icon">${theme.icon}</div>
-                <div class="name">${theme.name}</div>
+                <div class="name">${theme.name[language] ?? theme.name.ko}</div>
             `;
             card.addEventListener('click', () => onSelectTheme(theme.id));
-            this.themeGrid.appendChild(card);
+            if (index < orderedFixedThemes.length) {
+                priorityRow.appendChild(card);
+            } else {
+                themeListGrid.appendChild(card);
+            }
         });
+
+        if (priorityRow.children.length > 0) {
+            this.themeGrid.appendChild(priorityRow);
+        }
+        if (themeListGrid.children.length > 0) {
+            this.themeGrid.appendChild(themeListGrid);
+        }
     }
 
     updateDifficultySelection(pairsCount) {
-        this.difficultyBtns.forEach(btn => {
-            if (parseInt(btn.dataset.pairs) === pairsCount) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
+        this.difficultyBtns.forEach((button) => {
+            button.classList.toggle('active', parseInt(button.dataset.pairs, 10) === pairsCount);
+        });
+    }
+
+    updatePlayerCountSelection(playerCount) {
+        this.playerCountBtns.forEach((button) => {
+            button.classList.toggle('active', parseInt(button.dataset.players, 10) === playerCount);
+        });
+    }
+
+    bindSetupButtons(onSelectDifficulty, onSelectPlayers, onStart) {
+        this.difficultyBtns.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                onSelectDifficulty(parseInt(event.currentTarget.dataset.pairs, 10));
+            });
+        });
+
+        this.playerCountBtns.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                onSelectPlayers(parseInt(event.currentTarget.dataset.players, 10));
+            });
+        });
+
+        this.btnSetupStart.addEventListener('click', onStart);
+    }
+
+    bindDifficultyBackdrop(onClose) {
+        this.modalDifficulty.addEventListener('click', (event) => {
+            if (event.target === this.modalDifficulty) {
+                onClose();
             }
         });
     }
 
-    bindDifficultyButtons(onSelectDifficulty) {
-        this.difficultyBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const pairs = parseInt(e.currentTarget.dataset.pairs);
-                onSelectDifficulty(pairs);
-            });
-        });
+    bindLanguageToggle(onToggleLanguage) {
+        this.btnLangToggle.addEventListener('click', onToggleLanguage);
     }
 
-    // --- Game Screen ---
-    renderGameScreen(totalPairs, themeCssClass) {
+    showDifficultyModal() {
+        this.modalDifficulty.classList.remove('hidden');
+    }
+
+    hideDifficultyModal() {
+        this.modalDifficulty.classList.add('hidden');
+    }
+
+    renderGameScreen(totalPairs, themeCssClass, playerCount, language, scores) {
         this.screenHome.classList.remove('active');
         this.screenGame.classList.add('active');
-        this.statP1Score.textContent = '0';
-        this.statP2Score.textContent = '0';
-        this.updateTurnIndicator(1);
+        this.btnLangToggle.hidden = true;
+        this.renderPlayerStats(playerCount, language, scores, 1);
 
-        // 게임 보드 클래스 초기화 후 테마 클래스 추가
         this.gameBoard.className = `game-board ${themeCssClass}`;
-
-        // 그리드 템플릿 열 개수 계산 (반응형)
-        // 8장(4쌍 -> 2x4 또는 4x2 등), 12장(6쌍 -> 3x4), 16장(8쌍 -> 4x4)
         if (totalPairs === 8) {
             this.gameBoard.style.gridTemplateColumns = 'repeat(4, 1fr)';
         } else if (totalPairs === 6) {
             this.gameBoard.style.gridTemplateColumns = 'repeat(3, 1fr)';
         } else {
-            // 기본 4장(8개)의 경우
             this.gameBoard.style.gridTemplateColumns = 'repeat(4, 1fr)';
         }
     }
 
+    showExistingGameScreen() {
+        this.screenHome.classList.remove('active');
+        this.screenGame.classList.add('active');
+        this.btnLangToggle.hidden = true;
+    }
+
+    renderPlayerStats(playerCount, language, scores, currentPlayer) {
+        this.playerStats.innerHTML = '';
+        this.playerStats.style.gridTemplateColumns = `repeat(${playerCount}, minmax(0, 1fr))`;
+
+        for (let player = 1; player <= playerCount; player++) {
+            const stat = document.createElement('div');
+            stat.className = `player-stat player-${player} ${player === currentPlayer ? 'active' : ''}`;
+            stat.dataset.player = player;
+            stat.innerHTML = `
+                <span class="player-name">${t(language, 'player', { number: player })}</span>
+                <div class="score-badge"><span class="player-score">${scores[player] ?? 0}</span></div>
+            `;
+            this.playerStats.appendChild(stat);
+        }
+
+        this.updateTurnIndicator(currentPlayer);
+    }
+
+    getActiveTextPalette() {
+        const activeThemeClass = Array.from(this.gameBoard.classList)
+            .find((className) => Object.hasOwn(this.textThemePalettes, className));
+
+        return activeThemeClass ? this.textThemePalettes[activeThemeClass] : null;
+    }
+
+    renderCardFaceValue(item) {
+        if (typeof item === 'string') {
+            return item;
+        }
+
+        if (item?.type === 'labeled') {
+            return `
+                <div class="theme-item-labeled">
+                    <span class="emoji">${item.emoji}</span>
+                    <span class="label">${item.label[this.currentLanguage] ?? item.label.ko}</span>
+                </div>
+            `;
+        }
+
+        if (item?.type === 'flag') {
+            return `
+                <div class="flag-item">
+                    <img src="https://flagcdn.com/w80/${item.code}.png" alt="${item.code.toUpperCase()}">
+                    <span>${item.label[this.currentLanguage] ?? item.label.ko}</span>
+                </div>
+            `;
+        }
+
+        return '';
+    }
+
     renderBoard(cards, onCardClick) {
         this.gameBoard.innerHTML = '';
+        const textPalette = this.getActiveTextPalette();
+        const textColorMap = new Map();
+        let paletteIndex = 0;
+
         cards.forEach((cardData, index) => {
             const wrapperEl = document.createElement('div');
             wrapperEl.className = 'card-wrapper';
-            
-            // Random Jitter: between -4 and 4 degrees, -3 and 3 px
+
             const rotate = (Math.random() * 8 - 4).toFixed(1);
             const translateX = (Math.random() * 6 - 3).toFixed(1);
             const translateY = (Math.random() * 6 - 3).toFixed(1);
@@ -122,11 +299,22 @@ export class GameView {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
             cardEl.dataset.index = index;
-
             cardEl.innerHTML = `
-                <div class="card-face card-front">${cardData.value}</div>
+                <div class="card-face card-front">${this.renderCardFaceValue(cardData.value)}</div>
                 <div class="card-face card-back"></div>
             `;
+
+            if (textPalette && typeof cardData.value === 'string' && !cardData.value.includes('<')) {
+                if (!textColorMap.has(cardData.value)) {
+                    textColorMap.set(cardData.value, textPalette[paletteIndex % textPalette.length]);
+                    paletteIndex++;
+                }
+
+                const frontEl = cardEl.querySelector('.card-front');
+                if (frontEl) {
+                    frontEl.style.color = textColorMap.get(cardData.value);
+                }
+            }
 
             cardEl.addEventListener('click', () => onCardClick(index));
             wrapperEl.appendChild(cardEl);
@@ -134,24 +322,41 @@ export class GameView {
         });
     }
 
-    updateStats(scores) {
-        this.statP1Score.textContent = scores[1];
-        this.statP2Score.textContent = scores[2];
+    syncBoardState(cards) {
+        cards.forEach((cardData, index) => {
+            const cardEl = this.gameBoard.querySelector(`.card[data-index="${index}"]`);
+            if (!cardEl) return;
+
+            cardEl.classList.remove('flipped', 'matched', 'p1-match', 'p2-match', 'p3-match', 'p4-match');
+
+            if (cardData.isFlipped) {
+                cardEl.classList.add('flipped');
+            }
+
+            if (cardData.isMatched) {
+                cardEl.classList.add('matched', `p${cardData.matchedBy}-match`);
+            }
+        });
     }
-    
+
+    updateStats(scores) {
+        this.playerStats.querySelectorAll('.player-stat').forEach((stat) => {
+            const player = parseInt(stat.dataset.player, 10);
+            const scoreNode = stat.querySelector('.player-score');
+            if (scoreNode) {
+                scoreNode.textContent = scores[player] ?? 0;
+            }
+        });
+    }
+
     updateTurnIndicator(currentPlayer) {
         const gameHeader = document.querySelector('.game-header');
-        if (currentPlayer === 1) {
-            this.statP1.classList.add('active');
-            this.statP2.classList.remove('active');
-            gameHeader.classList.remove('turn-p2');
-            gameHeader.classList.add('turn-p1');
-        } else {
-            this.statP2.classList.add('active');
-            this.statP1.classList.remove('active');
-            gameHeader.classList.remove('turn-p1');
-            gameHeader.classList.add('turn-p2');
-        }
+        ['turn-p1', 'turn-p2', 'turn-p3', 'turn-p4'].forEach((className) => gameHeader.classList.remove(className));
+        gameHeader.classList.add(`turn-p${currentPlayer}`);
+
+        this.playerStats.querySelectorAll('.player-stat').forEach((stat) => {
+            stat.classList.toggle('active', parseInt(stat.dataset.player, 10) === currentPlayer);
+        });
     }
 
     flipCard(index) {
@@ -172,39 +377,49 @@ export class GameView {
     setMatchedCards(index1, index2, matchedBy) {
         const cardEl1 = this.gameBoard.querySelector(`.card[data-index="${index1}"]`);
         const cardEl2 = this.gameBoard.querySelector(`.card[data-index="${index2}"]`);
+        const matchClass = `p${matchedBy}-match`;
 
-        const matchClass = matchedBy === 1 ? 'p1-match' : 'p2-match';
-
-        if (cardEl1) {
-            cardEl1.classList.add('matched', matchClass);
-        }
-        if (cardEl2) {
-            cardEl2.classList.add('matched', matchClass);
-        }
+        if (cardEl1) cardEl1.classList.add('matched', matchClass);
+        if (cardEl2) cardEl2.classList.add('matched', matchClass);
     }
 
-    // --- Navigation & Modals ---
     showHomeScreen() {
         this.screenGame.classList.remove('active');
         this.modalClear.classList.add('hidden');
+        this.hideDifficultyModal();
         this.screenHome.classList.add('active');
+        this.btnLangToggle.hidden = false;
     }
 
-    showClearModal(scores) {
-        let resultText = '';
-        if (scores[1] > scores[2]) {
-            resultText = `🎉 Player 1 승리! (${scores[1]} : ${scores[2]})`;
-        } else if (scores[2] > scores[1]) {
-            resultText = `🎉 Player 2 승리! (${scores[2]} : ${scores[1]})`;
+    showClearModal(scores, language) {
+        const scoreEntries = Object.entries(scores).map(([player, score]) => ({
+            player: parseInt(player, 10),
+            score
+        }));
+        const maxScore = Math.max(...scoreEntries.map((entry) => entry.score));
+        const winners = scoreEntries.filter((entry) => entry.score === maxScore);
+
+        if (winners.length === 1) {
+            this.finalResultText.textContent = t(language, 'winnerSingle', {
+                player: t(language, 'player', { number: winners[0].player }),
+                score: maxScore
+            });
         } else {
-            resultText = `🤝 무승부! (${scores[1]} : ${scores[2]})`;
+            this.finalResultText.textContent = t(language, 'winnerTie', {
+                players: winners.map((winner) => t(language, 'player', { number: winner.player })).join(', '),
+                score: maxScore
+            });
         }
-        this.finalResultText.textContent = resultText;
+
         this.modalClear.classList.remove('hidden');
     }
 
     hideModal() {
         this.modalClear.classList.add('hidden');
+    }
+
+    isClearModalVisible() {
+        return !this.modalClear.classList.contains('hidden');
     }
 
     bindGameNav(onRestart, onBackToHome) {
@@ -217,13 +432,12 @@ export class GameView {
         this.btnModalHome.addEventListener('click', onBackToHome);
     }
 
-    // --- Pre-game Animations ---
     showCountdown(onComplete) {
         this.countdownOverlay.classList.remove('hidden');
         let count = 3;
         this.countdownText.textContent = count;
         audioManager.playCountdown();
-        
+
         const interval = setInterval(() => {
             count--;
             if (count > 0) {
@@ -231,27 +445,23 @@ export class GameView {
                 audioManager.playCountdown();
             } else {
                 clearInterval(interval);
-                this.countdownText.textContent = "GO!";
+                this.countdownText.textContent = 'GO!';
                 audioManager.playGo();
                 setTimeout(() => {
                     this.countdownOverlay.classList.add('hidden');
                     onComplete();
-                }, 500); // 0.5초간 GO 표시 후 시작
+                }, 500);
             }
         }, 1000);
     }
 
     peekAllCards(duration, callback) {
         const cards = this.gameBoard.querySelectorAll('.card');
-        
-        // 뒤집기
-        cards.forEach(c => c.classList.add('flipped'));
-        
-        // 보여준 후 다시 뒤집기
+        cards.forEach((card) => card.classList.add('flipped'));
+
         setTimeout(() => {
-            cards.forEach(c => c.classList.remove('flipped'));
-            // 뒤집히는 애니메이션 시간(0.4s) 이후에 게임 시작
-            setTimeout(callback, 400); 
+            cards.forEach((card) => card.classList.remove('flipped'));
+            setTimeout(callback, 400);
         }, 400 + duration);
     }
 }
