@@ -111,25 +111,8 @@ export class GameView {
         this.themeGrid.innerHTML = '';
 
         const fixedThemeIds = ['random', 'custom'];
-        const fixedThemes = [];
-        const shuffledThemes = [];
-
-        themes.forEach((theme) => {
-            if (fixedThemeIds.includes(theme.id)) {
-                fixedThemes.push(theme);
-            } else {
-                shuffledThemes.push(theme);
-            }
-        });
-
-        const orderedFixedThemes = fixedThemeIds
-            .map((themeId) => fixedThemes.find((theme) => theme.id === themeId))
-            .filter(Boolean);
-
-        for (let index = shuffledThemes.length - 1; index > 0; index--) {
-            const swapIndex = Math.floor(Math.random() * (index + 1));
-            [shuffledThemes[index], shuffledThemes[swapIndex]] = [shuffledThemes[swapIndex], shuffledThemes[index]];
-        }
+        const orderedFixedThemes = themes.filter((theme) => fixedThemeIds.includes(theme.id));
+        const otherThemes = themes.filter((theme) => !fixedThemeIds.includes(theme.id));
 
         const priorityRow = document.createElement('div');
         priorityRow.className = 'theme-priority-row';
@@ -137,7 +120,7 @@ export class GameView {
         const themeListGrid = document.createElement('div');
         themeListGrid.className = 'theme-list-grid';
 
-        [...orderedFixedThemes, ...shuffledThemes].forEach((theme, index) => {
+        [...orderedFixedThemes, ...otherThemes].forEach((theme, index) => {
             const card = document.createElement('div');
             card.className = `theme-card ${theme.id === selectedThemeId ? 'selected' : ''}`;
             card.innerHTML = `

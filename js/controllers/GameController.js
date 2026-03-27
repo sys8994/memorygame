@@ -5,6 +5,7 @@ export class GameController {
         this.model = model;
         this.view = view;
         this.themesData = themesData;
+        this.homeThemes = this.createHomeThemeOrder();
 
         this.selectedThemeId = this.themesData[0].id;
         this.selectedPairs = 8;
@@ -86,11 +87,29 @@ export class GameController {
         this.view.updateDifficultySelection(this.selectedPairs);
         this.view.updatePlayerCountSelection(this.selectedPlayerCount);
         this.view.renderThemes(
-            this.themesData,
+            this.homeThemes,
             this.selectedThemeId,
             this.currentLanguage,
             this.handleSelectTheme.bind(this)
         );
+    }
+
+    createHomeThemeOrder() {
+        const fixedThemeIds = ['random', 'custom'];
+        const fixedThemes = fixedThemeIds
+            .map((themeId) => this.themesData.find((theme) => theme.id === themeId))
+            .filter(Boolean);
+
+        const shuffledThemes = this.themesData
+            .filter((theme) => !fixedThemeIds.includes(theme.id))
+            .slice();
+
+        for (let index = shuffledThemes.length - 1; index > 0; index--) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            [shuffledThemes[index], shuffledThemes[swapIndex]] = [shuffledThemes[swapIndex], shuffledThemes[index]];
+        }
+
+        return [...fixedThemes, ...shuffledThemes];
     }
 
     handleToggleLanguage() {

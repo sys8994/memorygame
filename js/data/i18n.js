@@ -33,7 +33,7 @@ export const messages = {
     en: {
         appTitle: 'Memory Game',
         homeTitle: 'Memory Game',
-        homeCredit: "Logan's daddy",
+        homeCredit: "by Logan's daddy",
         homeSubtitle: 'Which picture theme would you like?',
         setupTitle: 'Game Setup',
         setupSubtitle: 'Choose card count and players',

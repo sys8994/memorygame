@@ -115,15 +115,14 @@ body {
     transform: translateY(6px);
 } */
 
-#home-credit {
+.home-credit {
+    display: inline-block;
     color: var(--primary-color);
     text-shadow:
         -2px -2px 0 #FFF, 2px -2px 0 #FFF,
         -2px 2px 0 #FFF, 2px 2px 0 #FFF,
         4px 4px 0px rgba(255, 184, 76, 0.5);
-    transform: rotate(-2deg);
-    transform: translateX(-16px);
-
+    transform: rotate(-2deg) translateX(-40px) translateY(10px) !important;
 }
 
 #screen-home p {
