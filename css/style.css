@@ -484,7 +484,7 @@ body {
 .theme-abc .card-front,
 .theme-kr .card-front,
 .theme-numbers .card-front {
-    font-size: 55cqw;
+    font-size: clamp(2rem, 40cqw, 4.5rem);
     font-weight: bold;
 }
 

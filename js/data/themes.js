@@ -3,6 +3,13 @@
  */
 export const themes = [
     {
+        id: 'random',
+        name: '랜덤 뽑기',
+        icon: '❓',
+        cssClass: 'theme-random',
+        items: []
+    },
+    {
         id: 'animals',
         name: '동물 친구들',
         icon: '🦁',
