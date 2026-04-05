@@ -1,4 +1,6 @@
+import { t } from '../data/i18n.js';
 import { audioManager } from '../utils/AudioManager.js';
+import { photoAlbumStore } from '../utils/PhotoAlbumStore.js';
 
 export class GameController {
     constructor(model, view, themesData) {
@@ -12,7 +14,7 @@ export class GameController {
         this.selectedPlayerCount = 2;
         this.currentLanguage = localStorage.getItem('memorygame-language') ?? 'ko';
         this.currentScreen = 'home';
-        this.isOpeningFilePicker = false;
+        this.albumPhotos = [];
 
         this.init();
     }
@@ -27,6 +29,12 @@ export class GameController {
         );
         this.view.bindDifficultyBackdrop(this.handleBackToHome.bind(this));
         this.view.bindLanguageToggle(this.handleToggleLanguage.bind(this));
+        this.view.bindAlbumControls(
+            this.handleOpenAlbum.bind(this),
+            this.handleCloseAlbum.bind(this),
+            this.handleAddAlbumPhotos.bind(this),
+            this.handleDeleteAlbumPhoto.bind(this)
+        );
 
         this.view.bindGameNav(
             this.startGame.bind(this),
@@ -40,12 +48,13 @@ export class GameController {
 
         const uploadInput = document.getElementById('custom-image-upload');
         if (uploadInput) {
-            uploadInput.addEventListener('change', this.handleCustomImageUpload.bind(this));
+            uploadInput.addEventListener('change', this.handleAlbumImageUpload.bind(this));
         }
 
         window.addEventListener('popstate', this.handlePopState.bind(this));
 
         this.renderHome();
+        this.loadAlbumPhotos();
     }
 
     getGameContext() {
@@ -53,12 +62,18 @@ export class GameController {
         return {
             playerCount: state.playerCount,
             scores: state.scores,
-            currentPlayer: state.currentPlayer
+            currentPlayer: state.currentPlayer,
+            currentTurn: state.currentTurn,
+            turnsCompleted: state.turnsCompleted,
+            albumCount: this.albumPhotos.length
         };
     }
 
     refreshLanguage() {
-        const context = this.currentScreen === 'game' ? this.getGameContext() : {};
+        const context = this.currentScreen === 'game'
+            ? this.getGameContext()
+            : { albumCount: this.albumPhotos.length };
+
         this.view.applyTranslations(this.currentLanguage, context);
 
         if (this.currentScreen === 'home') {
@@ -73,17 +88,27 @@ export class GameController {
                 context.scores,
                 context.currentPlayer
             );
+            this.view.updateTurnCounter(context.currentTurn, this.currentLanguage);
             this.view.renderBoard(this.model.cards, this.handleCardClick.bind(this));
             this.view.syncBoardState(this.model.cards);
 
             if (this.view.isClearModalVisible()) {
-                this.view.showClearModal(context.scores, this.currentLanguage);
+                this.view.showClearModal(
+                    context.scores,
+                    this.currentLanguage,
+                    context.turnsCompleted,
+                    context.playerCount
+                );
             }
+        }
+
+        if (this.view.isAlbumModalVisible()) {
+            this.view.renderAlbumPhotos(this.albumPhotos, this.currentLanguage);
         }
     }
 
     renderHome() {
-        this.view.applyTranslations(this.currentLanguage);
+        this.view.applyTranslations(this.currentLanguage, { albumCount: this.albumPhotos.length });
         this.view.updateDifficultySelection(this.selectedPairs);
         this.view.updatePlayerCountSelection(this.selectedPlayerCount);
         this.view.renderThemes(
@@ -92,6 +117,20 @@ export class GameController {
             this.currentLanguage,
             this.handleSelectTheme.bind(this)
         );
+    }
+
+    async loadAlbumPhotos() {
+        try {
+            this.albumPhotos = await photoAlbumStore.getAllPhotos();
+            this.view.renderAlbumPhotos(this.albumPhotos, this.currentLanguage);
+            this.view.setAlbumButtonCount(this.albumPhotos.length, this.currentLanguage);
+
+            if (this.currentScreen !== 'game') {
+                this.renderHome();
+            }
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     createHomeThemeOrder() {
@@ -137,53 +176,60 @@ export class GameController {
     }
 
     handleSetupStart() {
-        this.view.hideDifficultyModal();
-
-        if (this.selectedThemeId === 'custom') {
-            const uploadInput = document.getElementById('custom-image-upload');
-            if (uploadInput) {
-                this.isOpeningFilePicker = true;
-                uploadInput.click();
-            }
+        if (this.selectedThemeId === 'custom' && !this.prepareCustomThemeForGame()) {
             return;
         }
 
+        this.view.hideDifficultyModal();
         this.startGame();
     }
 
-    handleCustomImageUpload(event) {
-        const files = Array.from(event.target.files);
+    handleOpenAlbum() {
+        this.view.renderAlbumPhotos(this.albumPhotos, this.currentLanguage);
+        this.view.showAlbumModal();
+    }
+
+    handleCloseAlbum() {
+        this.view.hideAlbumModal();
+    }
+
+    handleAddAlbumPhotos() {
+        const uploadInput = document.getElementById('custom-image-upload');
+        if (uploadInput) {
+            uploadInput.click();
+        }
+    }
+
+    async handleAlbumImageUpload(event) {
+        const files = Array.from(event.target.files ?? []);
+        event.target.value = '';
+
         if (files.length === 0) {
-            this.isOpeningFilePicker = false;
-            this.view.showDifficultyModal();
             return;
         }
 
-        this.model.setProcessing(true);
-        const processFiles = files.slice(0, 16);
-        const imagePromises = processFiles.map((file) => this.processImageFile(file));
-
-        Promise.all(imagePromises).then((dataUrls) => {
-            const customTheme = this.themesData.find((theme) => theme.id === 'custom');
-            if (customTheme) {
-                let items = dataUrls.map((url) => `<div class="custom-image-container" style="width:100%; height:100%;"><img src="${url}" class="custom-image" alt="custom"></div>`);
-                while (items.length < this.selectedPairs) {
-                    items = items.concat(items);
-                }
-                customTheme.items = items;
-                this.startGame();
-            }
-            this.model.setProcessing(false);
-            this.isOpeningFilePicker = false;
-        }).catch((error) => {
+        try {
+            const imagePromises = files.map((file) => this.processImageFile(file));
+            const dataUrls = await Promise.all(imagePromises);
+            await photoAlbumStore.addPhotos(dataUrls);
+            await this.loadAlbumPhotos();
+            this.view.showAlbumModal();
+        } catch (error) {
             console.error(error);
-            alert(this.currentLanguage === 'ko' ? '이미지 처리 중 오류가 발생했습니다.' : 'An error occurred while processing the images.');
-            this.model.setProcessing(false);
-            this.isOpeningFilePicker = false;
-            this.view.showDifficultyModal();
-        });
+            alert(this.currentLanguage === 'ko'
+                ? '사진을 처리하는 중 오류가 발생했어요.'
+                : 'An error occurred while processing the images.');
+        }
+    }
 
-        event.target.value = '';
+    async handleDeleteAlbumPhoto(photoId) {
+        try {
+            await photoAlbumStore.deletePhoto(photoId);
+            await this.loadAlbumPhotos();
+            this.view.showAlbumModal();
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     processImageFile(file) {
@@ -213,6 +259,27 @@ export class GameController {
         });
     }
 
+    prepareCustomThemeForGame() {
+        if (this.albumPhotos.length < this.selectedPairs) {
+            alert(t(this.currentLanguage, 'albumNeedMorePhotos', {
+                required: this.selectedPairs,
+                count: this.albumPhotos.length
+            }));
+            return false;
+        }
+
+        const customTheme = this.themesData.find((theme) => theme.id === 'custom');
+        if (!customTheme) {
+            return false;
+        }
+
+        customTheme.items = this.albumPhotos.map((photo) => (
+            `<div class="custom-image-container" style="width:100%; height:100%;"><img src="${photo.dataUrl}" class="custom-image" alt="custom"></div>`
+        ));
+
+        return true;
+    }
+
     resolveGameThemeId() {
         let actualThemeId = this.selectedThemeId;
         if (actualThemeId === 'random') {
@@ -236,8 +303,13 @@ export class GameController {
     }
 
     startGame() {
+        if (this.selectedThemeId === 'custom' && !this.prepareCustomThemeForGame()) {
+            return;
+        }
+
         this.view.hideModal();
         this.view.hideDifficultyModal();
+        this.view.hideAlbumModal();
 
         const themeId = this.resolveGameThemeId();
         const theme = this.themesData.find((item) => item.id === themeId);
@@ -251,7 +323,8 @@ export class GameController {
             theme.cssClass,
             state.playerCount,
             this.currentLanguage,
-            state.scores
+            state.scores,
+            state.currentTurn
         );
         this.view.renderBoard(this.model.cards, this.handleCardClick.bind(this));
 
@@ -290,7 +363,6 @@ export class GameController {
         const nextScreen = event.state?.screen ?? 'home';
         if (nextScreen === 'home') {
             this.currentScreen = 'home';
-            this.isOpeningFilePicker = false;
             this.view.showHomeScreen();
             this.renderHome();
             return;
@@ -300,15 +372,14 @@ export class GameController {
             this.currentScreen = 'setup';
             this.view.showHomeScreen();
             this.renderHome();
-            if (!this.isOpeningFilePicker) {
-                this.view.showDifficultyModal();
-            }
+            this.view.showDifficultyModal();
             return;
         }
 
         this.currentScreen = 'game';
         this.view.showExistingGameScreen();
         this.view.updateTurnIndicator(this.model.getState().currentPlayer);
+        this.view.updateTurnCounter(this.model.getState().currentTurn, this.currentLanguage);
     }
 
     handleCardClick(index) {
@@ -332,18 +403,27 @@ export class GameController {
             }
 
             setTimeout(() => {
+                const state = this.model.getState();
+
                 if (result.isMatch) {
                     this.view.setMatchedCards(result.index1, result.index2, result.matchedBy);
+                    this.view.updateTurnCounter(state.currentTurn, this.currentLanguage);
 
                     if (result.isCleared) {
                         setTimeout(() => {
-                            this.view.showClearModal(this.model.getState().scores, this.currentLanguage);
+                            this.view.showClearModal(
+                                state.scores,
+                                this.currentLanguage,
+                                state.turnsCompleted,
+                                state.playerCount
+                            );
                         }, 500);
                     }
                 } else {
                     this.model.unflipCards(result.index1, result.index2);
                     this.view.unflipCards(result.index1, result.index2);
-                    this.view.updateTurnIndicator(this.model.getState().currentPlayer);
+                    this.view.updateTurnIndicator(state.currentPlayer);
+                    this.view.updateTurnCounter(state.currentTurn, this.currentLanguage);
                 }
 
                 this.model.setProcessing(false);

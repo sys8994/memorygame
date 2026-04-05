@@ -2,7 +2,7 @@ export const messages = {
     ko: {
         appTitle: '메모리게임',
         homeTitle: '메모리게임',
-        homeCredit: 'by.지범아빠',
+        homeCredit: 'by. 지범아빠',
         homeSubtitle: '어떤 그림으로 놀아볼까요?',
         setupTitle: '게임 설정',
         setupSubtitle: '카드 개수와 플레이어 수를 골라요',
@@ -16,7 +16,7 @@ export const messages = {
         home: '처음으로',
         restart: '다시하기',
         clearTitle: '다 찾았어요!',
-        clearMessage: '모든 카드의 짝을 다 찾았어요!',
+        clearMessage: '모든 카드 짝을 찾았어요!',
         clearPending: '결과를 계산 중...',
         playAnother: '다른 게임 하기',
         player: '플레이어 {number}',
@@ -28,7 +28,17 @@ export const messages = {
         winnerSingle: '{player} 승리! ({score}점)',
         winnerTie: '무승부! {players} ({score}점)',
         langButton: 'EN',
-        langAria: '영어로 전환'
+        langAria: '영어로 전환',
+        turnLabel: '턴 {turn}',
+        clearTurns: '{turns}턴 만에 클리어!',
+        albumButton: '앨범',
+        albumTitle: '사진 앨범',
+        albumSubtitle: '내 사진 모드에서 사용할 사진을 넣고 빼세요.',
+        albumAdd: '사진 추가',
+        albumEmpty: '아직 저장된 사진이 없어요.',
+        albumCount: '{count}장 저장됨',
+        albumDeleteAria: '사진 삭제',
+        albumNeedMorePhotos: '내 사진으로 플레이하려면 사진이 최소 {required}장 필요해요. 지금은 {count}장 있어요.'
     },
     en: {
         appTitle: 'Memory Game',
@@ -59,7 +69,17 @@ export const messages = {
         winnerSingle: '{player} wins! ({score} pts)',
         winnerTie: 'Tie! {players} ({score} pts)',
         langButton: 'KO',
-        langAria: 'Switch to Korean'
+        langAria: 'Switch to Korean',
+        turnLabel: 'Turn {turn}',
+        clearTurns: 'Cleared in {turns} turns!',
+        albumButton: 'Album',
+        albumTitle: 'Photo Album',
+        albumSubtitle: 'Add or remove photos for My Photos mode.',
+        albumAdd: 'Add Photos',
+        albumEmpty: 'No saved photos yet.',
+        albumCount: '{count} saved',
+        albumDeleteAria: 'Delete photo',
+        albumNeedMorePhotos: 'My Photos mode needs at least {required} photos. You currently have {count}.'
     }
 };
 

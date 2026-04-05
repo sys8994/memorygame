@@ -8,6 +8,7 @@ export class GameView {
 
         this.themeGrid = document.getElementById('theme-grid');
         this.modalDifficulty = document.getElementById('modal-difficulty');
+        this.modalAlbum = document.getElementById('modal-album');
         this.difficultyBtns = document.querySelectorAll('#difficulty-buttons-modal .btn-diff');
         this.playerCountBtns = document.querySelectorAll('#player-count-buttons .btn-player-count');
         this.btnSetupStart = document.getElementById('btn-setup-start');
@@ -16,9 +17,18 @@ export class GameView {
         this.homeCredit = document.getElementById('home-credit');
         this.homeSubtitle = document.getElementById('home-subtitle');
         this.btnLangToggle = document.getElementById('btn-lang-toggle');
+        this.btnAlbum = document.getElementById('btn-album');
+        this.btnAlbumClose = document.getElementById('btn-album-close');
+        this.btnAlbumAdd = document.getElementById('btn-album-add');
+        this.albumTitle = document.getElementById('album-title');
+        this.albumSubtitle = document.getElementById('album-subtitle');
+        this.albumCount = document.getElementById('album-count');
+        this.albumGrid = document.getElementById('album-grid');
+        this.albumEmpty = document.getElementById('album-empty');
 
         this.gameBoard = document.getElementById('game-board');
         this.playerStats = document.getElementById('player-stats');
+        this.turnCounter = document.getElementById('turn-counter');
         this.btnBack = document.getElementById('btn-back');
         this.btnRestart = document.getElementById('btn-restart');
 
@@ -26,6 +36,7 @@ export class GameView {
         this.clearTitle = document.getElementById('clear-title');
         this.clearMessage = document.getElementById('clear-message');
         this.finalResultText = document.getElementById('final-result-text');
+        this.clearTurnsText = document.getElementById('clear-turns-text');
         this.btnModalRestart = document.getElementById('btn-modal-restart');
         this.btnModalHome = document.getElementById('btn-modal-home');
 
@@ -44,13 +55,42 @@ export class GameView {
         };
         this.currentLanguage = 'ko';
 
-        document.body.addEventListener('click', (event) => {
+        document.body.addEventListener('pointerdown', (event) => {
             if (event.target.closest('button') || event.target.closest('.theme-card') || event.target.closest('.card')) {
                 audioManager.init();
             }
+        }, { passive: true });
+
+        document.body.addEventListener('click', (event) => {
             if (event.target.closest('button') || event.target.closest('.theme-card')) {
                 audioManager.playClick();
             }
+        });
+    }
+
+    bindPress(element, handler) {
+        let handledByPointer = false;
+
+        element.addEventListener('pointerdown', (event) => {
+            if (!event.isPrimary) return;
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+            handledByPointer = true;
+            if (event.pointerType !== 'mouse') {
+                event.preventDefault();
+            }
+
+            handler(event);
+        });
+
+        element.addEventListener('click', (event) => {
+            if (handledByPointer && event.detail !== 0) {
+                handledByPointer = false;
+                return;
+            }
+
+            handledByPointer = false;
+            handler(event);
         });
     }
 
@@ -71,6 +111,7 @@ export class GameView {
         this.clearTitle.textContent = t(language, 'clearTitle');
         this.clearMessage.textContent = t(language, 'clearMessage');
         this.finalResultText.textContent = t(language, 'clearPending');
+        this.clearTurnsText.textContent = '';
         this.btnModalRestart.textContent = t(language, 'restart');
         this.btnModalHome.textContent = t(language, 'playAnother');
         this.setupTitle.textContent = t(language, 'setupTitle');
@@ -81,6 +122,14 @@ export class GameView {
         this.btnLangToggle.textContent = `🌐 ${t(language, 'langButton')}`;
         this.btnLangToggle.setAttribute('aria-label', t(language, 'langAria'));
         this.btnLangToggle.setAttribute('title', t(language, 'langAria'));
+        this.btnAlbum.textContent = t(language, 'albumButton');
+        this.btnAlbum.setAttribute('aria-label', t(language, 'albumTitle'));
+        this.btnAlbum.setAttribute('title', t(language, 'albumTitle'));
+        this.btnAlbumClose.setAttribute('aria-label', 'Close');
+        this.btnAlbumClose.setAttribute('title', 'Close');
+        this.albumTitle.textContent = t(language, 'albumTitle');
+        this.albumSubtitle.textContent = t(language, 'albumSubtitle');
+        this.btnAlbumAdd.textContent = t(language, 'albumAdd');
 
         const cardLabels = {
             6: t(language, 'cards12'),
@@ -101,6 +150,15 @@ export class GameView {
         this.playerCountBtns.forEach((button) => {
             button.textContent = playerLabels[parseInt(button.dataset.players, 10)] ?? button.textContent;
         });
+
+        if (typeof context.albumCount === 'number') {
+            this.setAlbumButtonCount(context.albumCount, language);
+            this.albumCount.textContent = t(language, 'albumCount', { count: context.albumCount });
+        }
+
+        if (typeof context.currentTurn === 'number') {
+            this.updateTurnCounter(context.currentTurn, language);
+        }
 
         if (context.playerCount && context.scores && context.currentPlayer) {
             this.renderPlayerStats(context.playerCount, language, context.scores, context.currentPlayer);
@@ -127,7 +185,9 @@ export class GameView {
                 <div class="icon">${theme.icon}</div>
                 <div class="name">${theme.name[language] ?? theme.name.ko}</div>
             `;
-            card.addEventListener('click', () => onSelectTheme(theme.id));
+
+            this.bindPress(card, () => onSelectTheme(theme.id));
+
             if (index < orderedFixedThemes.length) {
                 priorityRow.appendChild(card);
             } else {
@@ -183,6 +243,25 @@ export class GameView {
         this.btnLangToggle.addEventListener('click', onToggleLanguage);
     }
 
+    bindAlbumControls(onOpen, onClose, onAdd, onDelete) {
+        this.btnAlbum.addEventListener('click', onOpen);
+        this.btnAlbumClose.addEventListener('click', onClose);
+        this.btnAlbumAdd.addEventListener('click', onAdd);
+
+        this.modalAlbum.addEventListener('click', (event) => {
+            if (event.target === this.modalAlbum) {
+                onClose();
+            }
+        });
+
+        this.albumGrid.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('[data-photo-id]');
+            if (!deleteButton) return;
+
+            onDelete(deleteButton.dataset.photoId);
+        });
+    }
+
     showDifficultyModal() {
         this.modalDifficulty.classList.remove('hidden');
     }
@@ -191,11 +270,21 @@ export class GameView {
         this.modalDifficulty.classList.add('hidden');
     }
 
-    renderGameScreen(totalPairs, themeCssClass, playerCount, language, scores) {
+    showAlbumModal() {
+        this.modalAlbum.classList.remove('hidden');
+    }
+
+    hideAlbumModal() {
+        this.modalAlbum.classList.add('hidden');
+    }
+
+    renderGameScreen(totalPairs, themeCssClass, playerCount, language, scores, currentTurn) {
         this.screenHome.classList.remove('active');
         this.screenGame.classList.add('active');
         this.btnLangToggle.hidden = true;
+        this.btnAlbum.hidden = true;
         this.renderPlayerStats(playerCount, language, scores, 1);
+        this.updateTurnCounter(currentTurn, language);
 
         this.gameBoard.className = `game-board ${themeCssClass}`;
         if (totalPairs === 8) {
@@ -211,6 +300,7 @@ export class GameView {
         this.screenHome.classList.remove('active');
         this.screenGame.classList.add('active');
         this.btnLangToggle.hidden = true;
+        this.btnAlbum.hidden = true;
     }
 
     renderPlayerStats(playerCount, language, scores, currentPlayer) {
@@ -229,6 +319,33 @@ export class GameView {
         }
 
         this.updateTurnIndicator(currentPlayer);
+    }
+
+    updateTurnCounter(turn, language = this.currentLanguage) {
+        this.turnCounter.dataset.turn = turn;
+        this.turnCounter.textContent = t(language, 'turnLabel', { turn });
+    }
+
+    setAlbumButtonCount(count, language = this.currentLanguage) {
+        this.btnAlbum.textContent = t(language, 'albumButton');
+        this.btnAlbum.dataset.count = count;
+    }
+
+    renderAlbumPhotos(photos, language) {
+        this.albumGrid.innerHTML = '';
+        this.albumCount.textContent = t(language, 'albumCount', { count: photos.length });
+        this.albumEmpty.textContent = t(language, 'albumEmpty');
+        this.albumEmpty.classList.toggle('hidden', photos.length > 0);
+
+        photos.forEach((photo) => {
+            const photoEl = document.createElement('div');
+            photoEl.className = 'album-photo';
+            photoEl.innerHTML = `
+                <img src="${photo.dataUrl}" alt="">
+                <button class="album-photo-delete" type="button" data-photo-id="${photo.id}" aria-label="${t(language, 'albumDeleteAria')}" title="${t(language, 'albumDeleteAria')}">X</button>
+            `;
+            this.albumGrid.appendChild(photoEl);
+        });
     }
 
     getActiveTextPalette() {
@@ -299,7 +416,7 @@ export class GameView {
                 }
             }
 
-            cardEl.addEventListener('click', () => onCardClick(index));
+            this.bindPress(cardEl, () => onCardClick(index));
             wrapperEl.appendChild(cardEl);
             this.gameBoard.appendChild(wrapperEl);
         });
@@ -334,6 +451,8 @@ export class GameView {
 
     updateTurnIndicator(currentPlayer) {
         const gameHeader = document.querySelector('.game-header');
+        if (!gameHeader) return;
+
         ['turn-p1', 'turn-p2', 'turn-p3', 'turn-p4'].forEach((className) => gameHeader.classList.remove(className));
         gameHeader.classList.add(`turn-p${currentPlayer}`);
 
@@ -370,11 +489,13 @@ export class GameView {
         this.screenGame.classList.remove('active');
         this.modalClear.classList.add('hidden');
         this.hideDifficultyModal();
+        this.hideAlbumModal();
         this.screenHome.classList.add('active');
         this.btnLangToggle.hidden = false;
+        this.btnAlbum.hidden = false;
     }
 
-    showClearModal(scores, language) {
+    showClearModal(scores, language, turnsCompleted, playerCount) {
         const scoreEntries = Object.entries(scores).map(([player, score]) => ({
             player: parseInt(player, 10),
             score
@@ -382,16 +503,21 @@ export class GameView {
         const maxScore = Math.max(...scoreEntries.map((entry) => entry.score));
         const winners = scoreEntries.filter((entry) => entry.score === maxScore);
 
-        if (winners.length === 1) {
+        if (playerCount === 1) {
+            this.finalResultText.textContent = t(language, 'clearTurns', { turns: turnsCompleted });
+            this.clearTurnsText.textContent = '';
+        } else if (winners.length === 1) {
             this.finalResultText.textContent = t(language, 'winnerSingle', {
                 player: t(language, 'player', { number: winners[0].player }),
                 score: maxScore
             });
+            this.clearTurnsText.textContent = t(language, 'clearTurns', { turns: turnsCompleted });
         } else {
             this.finalResultText.textContent = t(language, 'winnerTie', {
                 players: winners.map((winner) => t(language, 'player', { number: winner.player })).join(', '),
                 score: maxScore
             });
+            this.clearTurnsText.textContent = t(language, 'clearTurns', { turns: turnsCompleted });
         }
 
         this.modalClear.classList.remove('hidden');
@@ -403,6 +529,10 @@ export class GameView {
 
     isClearModalVisible() {
         return !this.modalClear.classList.contains('hidden');
+    }
+
+    isAlbumModalVisible() {
+        return !this.modalAlbum.classList.contains('hidden');
     }
 
     bindGameNav(onRestart, onBackToHome) {

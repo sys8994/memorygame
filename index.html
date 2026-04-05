@@ -9,6 +9,7 @@
 </head>
 <body>
     <div id="app">
+        <button id="btn-album" class="btn-icon album-btn" aria-label="Photo album" title="Photo album">Album</button>
         <button id="btn-lang-toggle" class="btn-icon lang-btn" aria-label="Switch language">🌐 EN</button>
         <button id="btn-audio-toggle" class="btn-icon audio-btn" hidden aria-hidden="true">🔊</button>
 
@@ -33,6 +34,7 @@
             </header>
 
             <main class="game-main">
+                <div id="turn-counter" class="turn-counter">Turn 1</div>
                 <div id="game-board" class="game-board"></div>
             </main>
 
@@ -48,10 +50,27 @@
                 <div class="mascot">🎉</div>
                 <p id="clear-message">모든 카드의 짝을 다 찾았어요!</p>
                 <p class="final-score" id="final-result-text">결과를 계산 중...</p>
+                <p class="clear-turns-text" id="clear-turns-text"></p>
                 <div class="modal-buttons">
                     <button id="btn-modal-restart" class="btn-primary">다시하기</button>
                     <button id="btn-modal-home" class="btn-secondary">다른 게임 하기</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="modal-album" class="modal hidden">
+            <div class="modal-content album-modal-content">
+                <div class="album-modal-header">
+                    <h2 id="album-title">Photo Album</h2>
+                    <button id="btn-album-close" class="btn-icon modal-close-btn" aria-label="Close" title="Close">X</button>
+                </div>
+                <p id="album-subtitle" class="difficulty-modal-text">Add or remove photos for My Photos mode.</p>
+                <div class="album-toolbar">
+                    <button id="btn-album-add" class="btn-primary album-add-btn">Add Photos</button>
+                    <p id="album-count" class="album-count">0 photos</p>
+                </div>
+                <p id="album-empty" class="album-empty hidden">No photos yet.</p>
+                <div id="album-grid" class="album-grid"></div>
             </div>
         </div>
 

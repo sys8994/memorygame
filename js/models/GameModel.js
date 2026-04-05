@@ -117,6 +117,10 @@ export class GameModel {
         return this.matches === this.totalPairs;
     }
 
+    getCurrentTurnNumber() {
+        return this.isGameCleared() ? this.moves : this.moves + 1;
+    }
+
     getState() {
         return {
             moves: this.moves,
@@ -124,7 +128,9 @@ export class GameModel {
             totalPairs: this.totalPairs,
             currentPlayer: this.currentPlayer,
             playerCount: this.playerCount,
-            scores: this.scores
+            scores: this.scores,
+            turnsCompleted: this.moves,
+            currentTurn: this.getCurrentTurnNumber()
         };
     }
 }
