@@ -29,12 +29,14 @@
         <div id="screen-game" class="screen">
             <header class="game-header">
                 <button id="btn-back" class="btn-icon game-nav-btn" aria-label="Home" title="Home">🏠</button>
-                <div id="player-stats" class="player-stats"></div>
+                <div class="game-header-center">
+                    <div id="turn-counter" class="turn-counter">Turn 1</div>
+                    <div id="player-stats" class="player-stats"></div>
+                </div>
                 <button id="btn-restart" class="btn-icon game-nav-btn" aria-label="Restart" title="Restart">🔄</button>
             </header>
 
             <main class="game-main">
-                <div id="turn-counter" class="turn-counter">Turn 1</div>
                 <div id="game-board" class="game-board"></div>
             </main>
 

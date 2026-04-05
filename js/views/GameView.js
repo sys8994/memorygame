@@ -217,18 +217,18 @@ export class GameView {
 
     bindSetupButtons(onSelectDifficulty, onSelectPlayers, onStart) {
         this.difficultyBtns.forEach((button) => {
-            button.addEventListener('click', (event) => {
+            this.bindPress(button, (event) => {
                 onSelectDifficulty(parseInt(event.currentTarget.dataset.pairs, 10));
             });
         });
 
         this.playerCountBtns.forEach((button) => {
-            button.addEventListener('click', (event) => {
+            this.bindPress(button, (event) => {
                 onSelectPlayers(parseInt(event.currentTarget.dataset.players, 10));
             });
         });
 
-        this.btnSetupStart.addEventListener('click', onStart);
+        this.bindPress(this.btnSetupStart, onStart);
     }
 
     bindDifficultyBackdrop(onClose) {
@@ -240,13 +240,15 @@ export class GameView {
     }
 
     bindLanguageToggle(onToggleLanguage) {
-        this.btnLangToggle.addEventListener('click', onToggleLanguage);
+        this.bindPress(this.btnLangToggle, onToggleLanguage);
     }
 
     bindAlbumControls(onOpen, onClose, onAdd, onDelete) {
-        this.btnAlbum.addEventListener('click', onOpen);
-        this.btnAlbumClose.addEventListener('click', onClose);
-        this.btnAlbumAdd.addEventListener('click', onAdd);
+        let lastDeletedPhotoId = null;
+
+        this.bindPress(this.btnAlbum, onOpen);
+        this.bindPress(this.btnAlbumClose, onClose);
+        this.bindPress(this.btnAlbumAdd, onAdd);
 
         this.modalAlbum.addEventListener('click', (event) => {
             if (event.target === this.modalAlbum) {
@@ -254,9 +256,23 @@ export class GameView {
             }
         });
 
+        this.albumGrid.addEventListener('pointerdown', (event) => {
+            const deleteButton = event.target.closest('[data-photo-id]');
+            if (!deleteButton) return;
+
+            lastDeletedPhotoId = deleteButton.dataset.photoId;
+            event.preventDefault();
+            onDelete(lastDeletedPhotoId);
+        });
+
         this.albumGrid.addEventListener('click', (event) => {
             const deleteButton = event.target.closest('[data-photo-id]');
             if (!deleteButton) return;
+
+            if (lastDeletedPhotoId === deleteButton.dataset.photoId) {
+                lastDeletedPhotoId = null;
+                return;
+            }
 
             onDelete(deleteButton.dataset.photoId);
         });
@@ -536,13 +552,13 @@ export class GameView {
     }
 
     bindGameNav(onRestart, onBackToHome) {
-        this.btnRestart.addEventListener('click', onRestart);
-        this.btnBack.addEventListener('click', onBackToHome);
+        this.bindPress(this.btnRestart, onRestart);
+        this.bindPress(this.btnBack, onBackToHome);
     }
 
     bindModalNav(onRestart, onBackToHome) {
-        this.btnModalRestart.addEventListener('click', onRestart);
-        this.btnModalHome.addEventListener('click', onBackToHome);
+        this.bindPress(this.btnModalRestart, onRestart);
+        this.bindPress(this.btnModalHome, onBackToHome);
     }
 
     showCountdown(onComplete) {
