@@ -68,7 +68,7 @@ export class GameView {
         });
     }
 
-    bindPress(element, handler) {
+    bindFastPress(element, handler) {
         let handledByPointer = false;
 
         element.addEventListener('pointerdown', (event) => {
@@ -186,7 +186,7 @@ export class GameView {
                 <div class="name">${theme.name[language] ?? theme.name.ko}</div>
             `;
 
-            this.bindPress(card, () => onSelectTheme(theme.id));
+            card.addEventListener('click', () => onSelectTheme(theme.id));
 
             if (index < orderedFixedThemes.length) {
                 priorityRow.appendChild(card);
@@ -217,18 +217,18 @@ export class GameView {
 
     bindSetupButtons(onSelectDifficulty, onSelectPlayers, onStart) {
         this.difficultyBtns.forEach((button) => {
-            this.bindPress(button, (event) => {
+            button.addEventListener('click', (event) => {
                 onSelectDifficulty(parseInt(event.currentTarget.dataset.pairs, 10));
             });
         });
 
         this.playerCountBtns.forEach((button) => {
-            this.bindPress(button, (event) => {
+            button.addEventListener('click', (event) => {
                 onSelectPlayers(parseInt(event.currentTarget.dataset.players, 10));
             });
         });
 
-        this.bindPress(this.btnSetupStart, onStart);
+        this.btnSetupStart.addEventListener('click', onStart);
     }
 
     bindDifficultyBackdrop(onClose) {
@@ -240,15 +240,13 @@ export class GameView {
     }
 
     bindLanguageToggle(onToggleLanguage) {
-        this.bindPress(this.btnLangToggle, onToggleLanguage);
+        this.btnLangToggle.addEventListener('click', onToggleLanguage);
     }
 
     bindAlbumControls(onOpen, onClose, onAdd, onDelete) {
-        let lastDeletedPhotoId = null;
-
-        this.bindPress(this.btnAlbum, onOpen);
-        this.bindPress(this.btnAlbumClose, onClose);
-        this.bindPress(this.btnAlbumAdd, onAdd);
+        this.btnAlbum.addEventListener('click', onOpen);
+        this.btnAlbumClose.addEventListener('click', onClose);
+        this.btnAlbumAdd.addEventListener('click', onAdd);
 
         this.modalAlbum.addEventListener('click', (event) => {
             if (event.target === this.modalAlbum) {
@@ -256,23 +254,9 @@ export class GameView {
             }
         });
 
-        this.albumGrid.addEventListener('pointerdown', (event) => {
-            const deleteButton = event.target.closest('[data-photo-id]');
-            if (!deleteButton) return;
-
-            lastDeletedPhotoId = deleteButton.dataset.photoId;
-            event.preventDefault();
-            onDelete(lastDeletedPhotoId);
-        });
-
         this.albumGrid.addEventListener('click', (event) => {
             const deleteButton = event.target.closest('[data-photo-id]');
             if (!deleteButton) return;
-
-            if (lastDeletedPhotoId === deleteButton.dataset.photoId) {
-                lastDeletedPhotoId = null;
-                return;
-            }
 
             onDelete(deleteButton.dataset.photoId);
         });
@@ -432,7 +416,7 @@ export class GameView {
                 }
             }
 
-            this.bindPress(cardEl, () => onCardClick(index));
+            this.bindFastPress(cardEl, () => onCardClick(index));
             wrapperEl.appendChild(cardEl);
             this.gameBoard.appendChild(wrapperEl);
         });
@@ -552,13 +536,13 @@ export class GameView {
     }
 
     bindGameNav(onRestart, onBackToHome) {
-        this.bindPress(this.btnRestart, onRestart);
-        this.bindPress(this.btnBack, onBackToHome);
+        this.btnRestart.addEventListener('click', onRestart);
+        this.btnBack.addEventListener('click', onBackToHome);
     }
 
     bindModalNav(onRestart, onBackToHome) {
-        this.bindPress(this.btnModalRestart, onRestart);
-        this.bindPress(this.btnModalHome, onBackToHome);
+        this.btnModalRestart.addEventListener('click', onRestart);
+        this.btnModalHome.addEventListener('click', onBackToHome);
     }
 
     showCountdown(onComplete) {
